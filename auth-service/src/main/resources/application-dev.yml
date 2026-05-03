@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth_db
+    username: auth_user
+    password: auth_pass
+  jpa:
+    show-sql: true
+
+jwt:
+  secret: changeme-this-is-a-very-long-dev-secret-key-32chars

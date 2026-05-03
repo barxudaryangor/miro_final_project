@@ -1,0 +1,45 @@
+server:
+  port: ${NOTIFICATION_SERVICE_PORT:8083}
+  shutdown: graceful
+
+spring:
+  application:
+    name: notification-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5435/notification_db}
+    username: ${NOTIFICATION_DB_USER}
+    password: ${NOTIFICATION_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:notification-service-group}
+      auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+
+kafka:
+  topics:
+    academic-events: ${ACADEMIC_EVENTS_TOPIC:academic-events}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

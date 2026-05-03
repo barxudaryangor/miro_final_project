@@ -1,0 +1,2 @@
+ALTER TABLE audit_logs
+    ADD COLUMN occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW();

@@ -1,0 +1,231 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Networks & Volumes
+# ─────────────────────────────────────────────────────────────────────────────
+networks:
+  university-net:
+    driver: bridge
+
+volumes:
+  auth-db-data:
+  academic-db-data:
+  notification-db-data:
+  audit-db-data:
+  kafka-data:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Services
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+
+  # ── Databases ───────────────────────────────────────────────────────────────
+
+  auth-db:
+    image: postgres:16-alpine
+    container_name: auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - university-net
+    ports:
+      - "5442:5432"
+
+  academic-db:
+    image: postgres:16-alpine
+    container_name: academic-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: academic_db
+      POSTGRES_USER: academic_user
+      POSTGRES_PASSWORD: academic_pass
+    volumes:
+      - academic-db-data:/var/lib/postgresql/data
+    networks:
+      - university-net
+    ports:
+      - "5433:5432"
+
+  notification-db:
+    image: postgres:16-alpine
+    container_name: notification-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: notification_pass
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    networks:
+      - university-net
+    ports:
+      - "5435:5432"
+
+  audit-db:
+    image: postgres:16-alpine
+    container_name: audit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: audit_db
+      POSTGRES_USER: audit_user
+      POSTGRES_PASSWORD: audit_pass
+    volumes:
+      - audit-db-data:/var/lib/postgresql/data
+    networks:
+      - university-net
+    ports:
+      - "5436:5432"
+
+  # ── Kafka (KRaft — no Zookeeper) ────────────────────────────────────────────
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: "1"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # Fixed cluster ID — must be 22-char URL-safe base64 encoded UUID
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - university-net
+    ports:
+      - "9092:9092"
+
+  # ── Application Services ─────────────────────────────────────────────────────
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    environment:
+      AUTH_DB_URL: jdbc:postgresql://auth-db:5432/auth_db
+      AUTH_DB_USER: auth_user
+      AUTH_DB_PASSWORD: auth_pass
+      JWT_SECRET: changeme-this-is-a-very-long-dev-secret-key-32chars
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-db
+    networks:
+      - university-net
+
+  # Two explicit replicas — podman-compose does not support deploy.replicas
+  academic-service-1:
+    build:
+      context: .
+      dockerfile: academic-service/Dockerfile
+    container_name: academic-service-1
+    restart: unless-stopped
+    environment:
+      ACADEMIC_DB_URL: jdbc:postgresql://academic-db:5432/academic_db
+      ACADEMIC_DB_USER: academic_user
+      ACADEMIC_DB_PASSWORD: academic_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: changeme-this-is-a-very-long-dev-secret-key-32chars
+      KAFKA_TOPIC_REPLICATION_FACTOR: "1"
+    depends_on:
+      - academic-db
+      - kafka
+    networks:
+      - university-net
+
+  academic-service-2:
+    build:
+      context: .
+      dockerfile: academic-service/Dockerfile
+    container_name: academic-service-2
+    restart: unless-stopped
+    environment:
+      ACADEMIC_DB_URL: jdbc:postgresql://academic-db:5432/academic_db
+      ACADEMIC_DB_USER: academic_user
+      ACADEMIC_DB_PASSWORD: academic_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: changeme-this-is-a-very-long-dev-secret-key-32chars
+      KAFKA_TOPIC_REPLICATION_FACTOR: "1"
+    depends_on:
+      - academic-db
+      - kafka
+    networks:
+      - university-net
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    container_name: notification-service
+    restart: unless-stopped
+    environment:
+      NOTIFICATION_DB_URL: jdbc:postgresql://notification-db:5432/notification_db
+      NOTIFICATION_DB_USER: notification_user
+      NOTIFICATION_DB_PASSWORD: notification_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_CONSUMER_GROUP_ID: notification-service-group
+      KAFKA_AUTO_OFFSET_RESET: earliest
+      ACADEMIC_EVENTS_TOPIC: academic-events
+    ports:
+      - "8083:8083"
+    depends_on:
+      - notification-db
+      - kafka
+    networks:
+      - university-net
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: audit-service/Dockerfile
+    container_name: audit-service
+    restart: unless-stopped
+    environment:
+      AUDIT_DB_URL: jdbc:postgresql://audit-db:5432/audit_db
+      AUDIT_DB_USER: audit_user
+      AUDIT_DB_PASSWORD: audit_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: changeme-this-is-a-very-long-dev-secret-key-32chars
+      AUDIT_KAFKA_GROUP_ID: audit-service-group
+      AUDIT_KAFKA_AUTO_OFFSET_RESET: earliest
+      ACADEMIC_EVENTS_TOPIC: academic-events
+    ports:
+      - "8084:8084"
+    depends_on:
+      - audit-db
+      - kafka
+    networks:
+      - university-net
+
+  # ── nginx load balancer for academic-service ─────────────────────────────────
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8082:80"
+    depends_on:
+      - academic-service-1
+      - academic-service-2
+    networks:
+      - university-net

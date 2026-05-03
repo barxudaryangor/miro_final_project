@@ -1,0 +1,5 @@
+# prometheus.yml — placeholder
+# This file will be filled in Step 8 (observability setup).
+# It will configure scrape jobs for all four services:
+#   auth-service:8081, academic-service:8082, notification-service:8083, audit-service:8084
+# All metrics are exposed at /actuator/prometheus.

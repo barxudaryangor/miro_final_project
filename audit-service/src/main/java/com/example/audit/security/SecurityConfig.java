@@ -1,0 +1,41 @@
+package com.example.audit.security;
+
+import com.example.audit.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
+
+                        // 🔒 ВОТ ГЛАВНОЕ
+                        .requestMatchers("/api/v1/audit/**")
+                        .hasAnyRole("ADMIN", "AUDITOR")
+
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
+                )
+                .build();
+    }
+}
