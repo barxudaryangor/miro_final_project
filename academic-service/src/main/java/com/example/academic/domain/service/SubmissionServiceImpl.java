@@ -70,6 +70,8 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         ActorContext enrichedActor = new ActorContext(student.getId(), actor.actorEmail(), actor.actorRole());
+        ProfessorEntity assignmentProfessor = professorRepository.findById(assignment.getProfessorId())
+                .orElseThrow(() -> new NotFoundException("Professor not found: " + assignment.getProfessorId()));
         SubmissionEntity entity = SubmissionMapper.toEntity(request);
         entity.setAssignmentId(assignmentId);
         entity.setStudentId(student.getId());
@@ -85,7 +87,8 @@ public class SubmissionServiceImpl implements SubmissionService {
                 Map.of(
                         "submissionId", savedSubmission.getId(),
                         "assignmentId", savedSubmission.getAssignmentId(),
-                        "studentId", savedSubmission.getStudentId()
+                        "studentId", savedSubmission.getStudentId(),
+                        "teacherEmail", assignmentProfessor.getEmail()
                 )
         ));
         academicMetrics.incrementSubmissionsCreated();
@@ -114,6 +117,8 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .orElseThrow(() -> new NotFoundException("Assignment not found: " + savedSubmission.getAssignmentId()));
         ProfessorEntity professor = professorRepository.findByEmail(actor.actorEmail())
                 .orElseThrow(() -> new NotFoundException("Professor not found for email: " + actor.actorEmail()));
+        StudentEntity submissionStudent = studentRepository.findById(savedSubmission.getStudentId())
+                .orElseThrow(() -> new NotFoundException("Student not found: " + savedSubmission.getStudentId()));
         ActorContext enrichedActor = new ActorContext(professor.getId(), actor.actorEmail(), actor.actorRole());
         eventPublisher.publish(AcademicEvent.create(
                 AcademicEventType.SUBMISSION_GRADED,
@@ -126,7 +131,8 @@ public class SubmissionServiceImpl implements SubmissionService {
                 Map.of(
                         "submissionId", savedSubmission.getId(),
                         "grade", savedSubmission.getGrade(),
-                        "studentId", savedSubmission.getStudentId()
+                        "studentId", savedSubmission.getStudentId(),
+                        "studentEmail", submissionStudent.getEmail()
                 )
         ));
         return SubmissionMapper.toResponse(savedSubmission);

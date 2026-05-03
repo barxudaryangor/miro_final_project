@@ -75,7 +75,7 @@ public class NotificationServiceImpl implements NotificationService {
         return switch (event.getEventType()) {
             case "STUDENT_REGISTERED_TO_COURSE" -> getRequiredString(data, "studentEmail");
 
-            case "ASSIGNMENT_CREATED" -> getRequiredString(data, "studentEmail");
+            case "ASSIGNMENT_CREATED" -> event.getActorEmail();
 
             case "SUBMISSION_CREATED" -> getRequiredString(data, "teacherEmail");
 

@@ -16,6 +16,7 @@ import com.example.academic.metrics.AcademicMetrics;
 import com.example.academic.persistence.entity.CourseEntity;
 import com.example.academic.persistence.entity.ProfessorEntity;
 import com.example.academic.persistence.entity.StudentCourseEntity;
+import com.example.academic.persistence.entity.StudentEntity;
 import com.example.academic.persistence.repository.CourseRepository;
 import com.example.academic.persistence.repository.ProfessorRepository;
 import com.example.academic.persistence.repository.StudentCourseRepository;
@@ -82,9 +83,8 @@ public class CourseServiceImpl implements CourseService {
         if (!courseRepository.existsById(courseId)) {
             throw new NotFoundException("Course not found: " + courseId);
         }
-        if (!studentRepository.existsById(studentId)) {
-            throw new NotFoundException("Student not found: " + studentId);
-        }
+        StudentEntity student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found: " + studentId));
         if (studentCourseRepository.existsByStudentIdAndCourseId(studentId, courseId)) {
             throw new ConflictException("Student " + studentId + " is already enrolled in course " + courseId);
         }
@@ -102,7 +102,7 @@ public class CourseServiceImpl implements CourseService {
                 "STUDENT_COURSE",
                 saved.getId(),
                 courseId,
-                Map.of("studentId", studentId, "courseId", courseId)
+                Map.of("studentId", studentId, "courseId", courseId, "studentEmail", student.getEmail())
         ));
     }
 
