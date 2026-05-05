@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: academic-service
+  namespace: university-platform
+  labels:
+    app: academic-service
+    part-of: university-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: academic-service
+  template:
+    metadata:
+      labels:
+        app: academic-service
+        part-of: university-platform
+    spec:
+      containers:
+        - name: academic-service
+          image: localhost/university-platform/academic-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: university-config
+          env:
+            - name: ACADEMIC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: university-secrets
+                  key: academic-db-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: university-secrets
+                  key: jwt-secret
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 3

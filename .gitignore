@@ -1,0 +1,14 @@
+
+# build outputs
+target/
+*/target/
+
+# container image archives
+*.tar
+
+# build outputs
+target/
+*/target/
+
+# container image archives
+*.tar

@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: university-config
+  namespace: university-platform
+data:
+  # Auth service
+  AUTH_DB_URL: "jdbc:postgresql://postgres-auth:5432/auth_db"
+  AUTH_DB_USER: "auth_user"
+
+  # Academic service
+  ACADEMIC_DB_URL: "jdbc:postgresql://postgres-academic:5432/academic_db"
+  ACADEMIC_DB_USER: "academic_user"
+
+  # Notification service
+  NOTIFICATION_DB_URL: "jdbc:postgresql://postgres-notification:5432/notification_db"
+  NOTIFICATION_DB_USER: "notification_user"
+
+  # Audit service
+  AUDIT_DB_URL: "jdbc:postgresql://postgres-audit:5432/audit_db"
+  AUDIT_DB_USER: "audit_user"
+
+  # Kafka
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"

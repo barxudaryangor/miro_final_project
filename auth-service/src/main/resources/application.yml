@@ -18,6 +18,13 @@ management:
     web:
       exposure:
         include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
 
 jwt:
   secret: ${JWT_SECRET:changeme-this-is-a-very-long-dev-secret-key-32chars}

@@ -28,7 +28,7 @@ public class SecurityConfig {
 
                         // 🔒 ВОТ ГЛАВНОЕ
                         .requestMatchers("/api/v1/audit/**")
-                        .hasAnyRole("ADMIN", "AUDITOR")
+                        .hasAnyRole("PROFESSOR")
 
                         .anyRequest().authenticated()
                 )

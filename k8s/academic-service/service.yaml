@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: academic-service
+  namespace: university-platform
+  labels:
+    app: academic-service
+    part-of: university-platform
+spec:
+  type: ClusterIP
+  selector:
+    app: academic-service
+  ports:
+    - port: 8082
+      targetPort: 8082

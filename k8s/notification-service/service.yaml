@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: university-platform
+  labels:
+    app: notification-service
+    part-of: university-platform
+spec:
+  type: ClusterIP
+  selector:
+    app: notification-service
+  ports:
+    - port: 8083
+      targetPort: 8083

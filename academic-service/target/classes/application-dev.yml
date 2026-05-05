@@ -1,8 +1,0 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5434/academic_db
-    username: academic_user
-    password: academic_pass
-
-jwt:
-  secret: changeme-this-is-a-very-long-dev-secret-key-32chars

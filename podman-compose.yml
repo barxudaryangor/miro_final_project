@@ -13,6 +13,7 @@ volumes:
   notification-db-data:
   audit-db-data:
   kafka-data:
+  grafana-data:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Services
@@ -241,5 +242,39 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     depends_on:
       - kafka
+    networks:
+      - university-net
+
+  # ── Observability ────────────────────────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - auth-service
+      - academic-service-1
+      - academic-service-2
+      - notification-service
+      - audit-service
+    networks:
+      - university-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
     networks:
       - university-net
