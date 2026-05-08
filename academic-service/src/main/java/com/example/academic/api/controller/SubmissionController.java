@@ -32,6 +32,7 @@ public class SubmissionController {
     public ResponseEntity<SubmissionResponse> create(@PathVariable UUID assignmentId,
                                                      @Valid @RequestBody SubmissionRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         String actorEmail = (authentication != null) ? authentication.getName() : null;
         String actorRole = (authentication != null)
                 ? authentication.getAuthorities().stream()
@@ -39,6 +40,7 @@ public class SubmissionController {
                         .map(a -> a.getAuthority().replace("ROLE_", ""))
                         .orElse(null)
                 : null;
+
         ActorContext actor = new ActorContext(null, actorEmail, actorRole);
         return ResponseEntity.status(HttpStatus.CREATED).body(submissionService.create(assignmentId, request, actor));
     }
@@ -60,6 +62,7 @@ public class SubmissionController {
     public ResponseEntity<SubmissionResponse> grade(@PathVariable UUID id,
                                                     @Valid @RequestBody GradeSubmissionRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         String actorEmail = (authentication != null) ? authentication.getName() : null;
         String actorRole = (authentication != null)
                 ? authentication.getAuthorities().stream()
@@ -67,6 +70,7 @@ public class SubmissionController {
                         .map(a -> a.getAuthority().replace("ROLE_", ""))
                         .orElse(null)
                 : null;
+
         ActorContext actor = new ActorContext(null, actorEmail, actorRole);
         return ResponseEntity.ok(submissionService.grade(id, request, actor));
     }

@@ -31,6 +31,7 @@ public class AssignmentController {
     public ResponseEntity<AssignmentResponse> create(@PathVariable UUID courseId,
                                                      @Valid @RequestBody AssignmentRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         String actorEmail = (authentication != null) ? authentication.getName() : null;
         String actorRole = (authentication != null)
                 ? authentication.getAuthorities().stream()
@@ -38,6 +39,7 @@ public class AssignmentController {
                         .map(a -> a.getAuthority().replace("ROLE_", ""))
                         .orElse(null)
                 : null;
+
         ActorContext actor = new ActorContext(null, actorEmail, actorRole);
         return ResponseEntity.status(HttpStatus.CREATED).body(assignmentService.create(courseId, request, actor));
     }

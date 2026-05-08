@@ -34,25 +34,17 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return parseClaims(token).getSubject();
-    }
+//    public String extractEmail(String token) {
+//        return parseClaims(token).getSubject();
+//    }
+//
+//    public String extractRole(String token) {
+//        return parseClaims(token).get("role", String.class);
+//    }
 
-    public String extractRole(String token) {
-        return parseClaims(token).get("role", String.class);
-    }
 
     public Claims extractClaims(String token) {
         return parseClaims(token);
-    }
-
-    public boolean isTokenValid(String token) {
-        try {
-            Claims claims = parseClaims(token);
-            return claims.getExpiration().after(new Date());
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     private Claims parseClaims(String token) {
@@ -62,4 +54,16 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+
+//    public boolean isTokenValid(String token) {
+//        try {
+//            Claims claims = parseClaims(token);
+//            return claims.getExpiration().after(new Date());
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
+
+
 }

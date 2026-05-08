@@ -39,13 +39,17 @@ public class AssignmentServiceImpl implements AssignmentService {
         if (!courseRepository.existsById(courseId)) {
             throw new NotFoundException("Course not found: " + courseId);
         }
+
         ProfessorEntity professor = professorRepository.findByEmail(actor.actorEmail())
                 .orElseThrow(() -> new NotFoundException("Professor not found for email: " + actor.actorEmail()));
+
         ActorContext enrichedActor = new ActorContext(professor.getId(), actor.actorEmail(), actor.actorRole());
+
         AssignmentEntity entity = AssignmentMapper.toEntity(request);
         entity.setCourseId(courseId);
         entity.setProfessorId(professor.getId());
         AssignmentEntity savedAssignment = assignmentRepository.save(entity);
+
         eventPublisher.publish(AcademicEvent.create(
                 AcademicEventType.ASSIGNMENT_CREATED,
                 enrichedActor.actorId(),

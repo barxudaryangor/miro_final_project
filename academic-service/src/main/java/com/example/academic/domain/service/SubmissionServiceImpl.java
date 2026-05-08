@@ -50,6 +50,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         AssignmentEntity assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new NotFoundException("Assignment not found: " + assignmentId));
+
         StudentEntity student = studentRepository.findByEmail(actor.actorEmail())
                 .orElseThrow(() -> new NotFoundException("Student not found for email: " + actor.actorEmail()));
 
@@ -70,12 +71,14 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         ActorContext enrichedActor = new ActorContext(student.getId(), actor.actorEmail(), actor.actorRole());
+
         ProfessorEntity assignmentProfessor = professorRepository.findById(assignment.getProfessorId())
                 .orElseThrow(() -> new NotFoundException("Professor not found: " + assignment.getProfessorId()));
         SubmissionEntity entity = SubmissionMapper.toEntity(request);
         entity.setAssignmentId(assignmentId);
         entity.setStudentId(student.getId());
         SubmissionEntity savedSubmission = submissionRepository.save(entity);
+
         eventPublisher.publish(AcademicEvent.create(
                 AcademicEventType.SUBMISSION_CREATED,
                 enrichedActor.actorId(),
@@ -112,14 +115,20 @@ public class SubmissionServiceImpl implements SubmissionService {
         SubmissionEntity entity = findOrThrow(id);
         entity.setGrade(request.grade());
         entity.setStatus(SubmissionStatus.GRADED);
+
         SubmissionEntity savedSubmission = submissionRepository.save(entity);
+
         AssignmentEntity assignment = assignmentRepository.findById(savedSubmission.getAssignmentId())
                 .orElseThrow(() -> new NotFoundException("Assignment not found: " + savedSubmission.getAssignmentId()));
+
         ProfessorEntity professor = professorRepository.findByEmail(actor.actorEmail())
                 .orElseThrow(() -> new NotFoundException("Professor not found for email: " + actor.actorEmail()));
+
         StudentEntity submissionStudent = studentRepository.findById(savedSubmission.getStudentId())
                 .orElseThrow(() -> new NotFoundException("Student not found: " + savedSubmission.getStudentId()));
+
         ActorContext enrichedActor = new ActorContext(professor.getId(), actor.actorEmail(), actor.actorRole());
+
         eventPublisher.publish(AcademicEvent.create(
                 AcademicEventType.SUBMISSION_GRADED,
                 enrichedActor.actorId(),

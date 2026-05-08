@@ -83,17 +83,24 @@ public class CourseServiceImpl implements CourseService {
         if (!courseRepository.existsById(courseId)) {
             throw new NotFoundException("Course not found: " + courseId);
         }
+
         StudentEntity student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found: " + studentId));
+
         if (studentCourseRepository.existsByStudentIdAndCourseId(studentId, courseId)) {
             throw new ConflictException("Student " + studentId + " is already enrolled in course " + courseId);
         }
+
         StudentCourseEntity saved = studentCourseRepository.save(
                 StudentCourseMapper.toEntity(new StudentCourseRequest(studentId, courseId)));
+
         academicMetrics.incrementStudentsRegistered();
+
         ProfessorEntity professor = professorRepository.findByEmail(actor.actorEmail())
                 .orElseThrow(() -> new NotFoundException("Professor not found for email: " + actor.actorEmail()));
+
         ActorContext enrichedActor = new ActorContext(professor.getId(), actor.actorEmail(), actor.actorRole());
+
         eventPublisher.publish(AcademicEvent.create(
                 AcademicEventType.STUDENT_REGISTERED_TO_COURSE,
                 enrichedActor.actorId(),

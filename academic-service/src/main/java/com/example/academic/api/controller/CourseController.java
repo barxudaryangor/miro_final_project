@@ -65,11 +65,13 @@ public class CourseController {
     public ResponseEntity<Void> registerStudent(@PathVariable UUID courseId,
                                                 @PathVariable UUID studentId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         String email = auth != null ? (String) auth.getPrincipal() : null;
         String role = auth != null ? auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(a -> a.startsWith("ROLE_") ? a.substring(5) : a)
                 .findFirst().orElse(null) : null;
+
         ActorContext actor = new ActorContext(null, email, role);
         courseService.registerStudent(courseId, studentId, actor);
         return ResponseEntity.noContent().build();
